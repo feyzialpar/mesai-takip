@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>İşletme Kayıt v19</title>
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3069/3069186.png">
+    
+    <style>
+        :root { --apple-blue: #007AFF; --apple-bg: #F2F2F7; --apple-green: #34C759; --apple-gray: #8E8E93; --apple-red: #FF3B30; --card-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--apple-bg); margin: 0; padding-bottom: 240px; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        .tab-bar { display: flex; background: rgba(229, 229, 234, 0.8); backdrop-filter: blur(10px); margin: 10px; padding: 3px; border-radius: 14px; position: sticky; top: 10px; z-index: 1000; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--apple-gray); background: transparent; transition: 0.2s; }
+        .tab-btn.active { background: white; color: black; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .page { display: none; padding: 0 15px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .page.active { display: block; }
+
+        .date-display { text-align: center; font-size: 18px; font-weight: 800; margin: 15px 0; color: #1c1c1e; }
+        .section-title { font-size: 12px; color: var(--apple-gray); text-transform: uppercase; margin: 25px 5px 10px; font-weight: 700; letter-spacing: 0.8px; }
+        
+        .card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; box-shadow: var(--card-shadow); border: 1px solid rgba(0,0,0,0.02); }
+        
+        /* Arşiv Özel Tasarımı */
+        .archive-date-header { font-size: 15px; font-weight: 800; color: var(--apple-blue); border-bottom: 1px solid #F2F2F7; padding-bottom: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .archive-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #FAFAFA; }
+        .archive-worker-name { font-weight: 600; color: #3a3a3c; font-size: 14px; }
+        .archive-job-tag { font-size: 11px; background: #E5F1FF; color: var(--apple-blue); padding: 2px 8px; border-radius: 6px; font-weight: 700; margin-left: 8px; }
+        .archive-count { font-weight: 700; color: #000; font-size: 15px; }
+        .archive-mesai-box { background: #F2FBF4; border-radius: 12px; padding: 10px; margin-top: 10px; border-left: 4px solid var(--apple-green); }
+        .archive-mesai-title { font-size: 11px; font-weight: 800; color: var(--apple-green); margin-bottom: 4px; display: block; }
+
+        /* Form Elemanları */
+        .row-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .job-select { background: #F2F2F7; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; color: var(--apple-blue); -webkit-appearance: none; }
+        .count-input { width: 40px; padding: 8px 0; text-align: center; border: 1px solid #D1D1D6; border-radius: 10px; font-size: 16px; font-weight: 700; }
+        .btn-s { width: 36px; height: 36px; border-radius: 10px; border: none; font-weight: bold; font-size: 20px; transition: active 0.1s; }
+        .btn-s:active { transform: scale(0.95); opacity: 0.7; }
+
+        .mesai-form { display: grid; grid-template-columns: 1.2fr 0.7fr 0.7fr 0.7fr auto; gap: 6px; }
+        .mesai-form select { width: 100%; padding: 12px 4px; border-radius: 12px; border: 1px solid #D1D1D6; font-size: 13px; font-weight: 600; background: #fff; -webkit-appearance: none; }
+        
+        .footer-summary { position: fixed; bottom: 75px; left:12px; right:12px; background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); padding: 14px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; z-index: 999; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+        .footer-item { background: white; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #1c1c1e; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchPage('order-page', this)">Sipariş</button>
+        <button class="tab-btn" onclick="switchPage('worker-page', this)">İşçiler</button>
+        <button class="tab-btn" onclick="switchPage('archive-page', this)">Arşiv</button>
+    </div>
+
+    <div id="today-label" class="date-display"></div>
+
+    <div id="order-page" class="page active">
+        <div id="menu-list"></div>
+        <button onclick="resetDailyOrders()" style="width:100%; background:var(--apple-red); color:white; border:none; padding:18px; border-radius:16px; margin-top:25px; font-weight:700; font-size:15px;">Günü Sıfırla</button>
+    </div>
+
+    <div id="worker-page" class="page">
+        <div class="section-title">Yeni Personel</div>
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <input type="text" id="workerInput" style="flex:1; padding:14px; border-radius:14px; border:1px solid #D1D1D6; font-size:16px; outline:none;" placeholder="İsim...">
+            <button onclick="addNewWorker()" style="background:var(--apple-blue); color:white; border:none; border-radius:14px; padding:0 20px; font-weight:700;">Ekle</button>
+        </div>
+
+        <div class="section-title">Gündüz Çalışanlar</div>
+        <div id="worker-list"></div>
+
+        <div class="section-title">Akşam Mesai Kaydı</div>
+        <div class="card">
+            <div class="mesai-form">
+                <div><select id="ms_name"></select></div>
+                <div><select id="ms_kisi_sayisi"></select></div>
+                <div><select id="ms_saat"></select></div>
+                <div><select id="ms_dk"></select></div>
+                <button onclick="addMesaiRecord()" style="background:var(--apple-green); color:white; border:none; border-radius:12px; height:42px; width:42px; font-weight:bold;">OK</button>
+            </div>
+            <div id="today-mesai-list" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <div id="archive-page" class="page">
+        <div id="archive-list"></div>
+        <button onclick="clearFullArchive()" style="color:var(--apple-red); background:none; border:none; width:100%; margin-top:50px; font-size:12px; text-decoration:underline; font-weight:600; opacity:0.6;">SİSTEMİ KOMPLE SIFIRLA</button>
+    </div>
+
+    <div class="footer-summary" id="footer-text">...</div>
+
+    <script>
+        let appData = { personelListesi: [], gunlukSiparis: {}, isciArsivi: {}, mesaiData: {} };
+        const menuGruplari = { "🥘 Yemekler": ["Köfte", "Tavuk", "Kaşarlı Tost", "Kaşarsız Tost", "Sulu Yemek"], "🥤 İçecekler": ["Kola", "Ayran"] };
+        const isKategorileri = ["Dikim", "Çapa", "Ot", "Makine"];
+
+        function getTodayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+        function formatTurkishDate(isoDate) { 
+            const d = new Date(isoDate);
+            return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        function init() {
+            const kayitli = localStorage.getItem('isletme_v19');
+            if(kayitli) appData = JSON.parse(kayitli);
+            if(!appData.mesaiData) appData.mesaiData = {};
+            checkDateChange();
+            document.getElementById('today-label').innerText = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+            fillSelects();
+            refreshUI();
+        }
+
+        function fillSelects() {
+            const kisiSel = document.getElementById('ms_kisi_sayisi');
+            kisiSel.innerHTML = ""; for(let i=1; i<=10; i++) kisiSel.options.add(new Option(i+" Kişi", i));
+            const saatSel = document.getElementById('ms_saat');
+            saatSel.innerHTML = ""; for(let i=0; i<=5; i++) saatSel.options.add(new Option(i+" Saat", i));
+            const dkSel = document.getElementById('ms_dk');
+            dkSel.innerHTML = ""; for(let i=0; i<60; i+=5) dkSel.options.add(new Option(i+" Dk", i));
+        }
+
+        function checkDateChange() {
+            const bugun = getTodayStr();
+            if(!appData.isciArsivi[bugun]) appData.isciArsivi[bugun] = {};
+            if(!appData.mesaiData[bugun]) appData.mesaiData[bugun] = [];
+        }
+
+        function refreshUI() {
+            checkDateChange();
+            renderOrders();
+            renderWorkers();
+            renderArchive();
+            updateFooter();
+            updateMesaiList();
+            localStorage.setItem('isletme_v19', JSON.stringify(appData));
+        }
+
+        function switchPage(id, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            refreshUI();
+        }
+
+        function renderOrders() {
+            let html = "";
+            for (let grup in menuGruplari) {
+                html += `<div class="section-title">${grup}</div>`;
+                menuGruplari[grup].forEach(m => {
+                    html += `<div class="card"><div class="row-item"><span style="font-weight:600;">${m}</span><div><button class="btn-s" style="background:#FFE5E5; color:red;" onclick="changeOrder('${m}', -1)">-</button><input type="text" class="count-input" value="${appData.gunlukSiparis[m] || 0}" readonly style="margin:0 5px; border:none;"><button class="btn-s" style="background:#E5F9E0; color:green;" onclick="changeOrder('${m}', 1)">+</button></div></div></div>`;
+                });
+            }
+            document.getElementById('menu-list').innerHTML = html;
+        }
+
+        function changeOrder(name, val) { appData.gunlukSiparis[name] = Math.max(0, (appData.gunlukSiparis[name] || 0) + val); refreshUI(); }
+        function resetDailyOrders() { if(confirm("Tüm siparişler sıfırlansın mı?")) { appData.gunlukSiparis = {}; refreshUI(); } }
+
+        function addNewWorker() {
+            const inp = document.getElementById('workerInput');
+            if(!inp.value.trim()) return;
+            appData.personelListesi.push({ id: Date.now(), ad: inp.value.trim(), job: isKategorileri[0] });
+            inp.value = '';
+            refreshUI();
+        }
+
+        function renderWorkers() {
+            const bugun = getTodayStr();
+            document.getElementById('worker-list').innerHTML = appData.personelListesi.map(p => {
+                const count = appData.isciArsivi[bugun][p.id] || 0;
+                return `<div class="card"><div class="row-item"><span style="font-weight:700; flex:1;" onclick="removeWorker(${p.id})">${p.ad}</span><select class="job-select" onchange="updateJob(${p.id}, this.value)">${isKategorileri.map(k => `<option value="${k}" ${k === p.job ? 'selected' : ''}>${k}</option>`).join('')}</select><div style="margin-left:8px;"><button class="btn-s" style="background:#FFE5E5; color:red;" onclick="updateWorkerCount(${p.id}, -1)">-</button><input type="text" class="count-input" value="${count}" readonly style="margin:0 4px; border:none;"><button class="btn-s" style="background:#E5F9E0; color:green;" onclick="updateWorkerCount(${p.id}, 1)">+</button></div></div></div>`;
+            }).join('');
+        }
+
+        function updateJob(id, val) { const p = appData.personelListesi.find(x => x.id === id); if(p) p.job = val; refreshUI(); }
+        function updateWorkerCount(id, val) { const bugun = getTodayStr(); appData.isciArsivi[bugun][id] = Math.max(0, (appData.isciArsivi[bugun][id] || 0) + val); refreshUI(); }
+
+        function updateMesaiList() {
+            const sel = document.getElementById('ms_name');
+            const currentVal = sel.value;
+            sel.innerHTML = `<option value="">Sorumlu Seç...</option>` + appData.personelListesi.map(p => `<option value="${p.id}">${p.ad}</option>`).join('');
+            sel.value = currentVal;
+            
+            const bugun = getTodayStr();
+            let mesaiHtml = "";
+            (appData.mesaiData[bugun] || []).forEach((m, index) => {
+                const p = appData.personelListesi.find(x => x.id == m.id);
+                if(p) mesaiHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; background:#F2F2F7; padding:10px; border-radius:12px;"><span><b>${p.ad}</b> (${m.kisi} Kişi)</span><span><b>${m.saat}s ${m.dk}d</b> <span style="color:red; margin-left:10px; font-weight:800;" onclick="deleteMesai(${index})">✕</span></span></div>`;
+            });
+            document.getElementById('today-mesai-list').innerHTML = mesaiHtml;
+        }
+
+        function addMesaiRecord() {
+            const id = document.getElementById('ms_name').value;
+            const kisi = document.getElementById('ms_kisi_sayisi').value;
+            const saat = document.getElementById('ms_saat').value;
+            const dk = document.getElementById('ms_dk').value;
+            if(!id) { alert("Lütfen sorumlu seçin!"); return; }
+            appData.mesaiData[getTodayStr()].push({ id, kisi, saat, dk });
+            refreshUI();
+        }
+
+        function deleteMesai(index) { appData.mesaiData[getTodayStr()].splice(index, 1); refreshUI(); }
+
+        function renderArchive() {
+            let html = "";
+            const tarihler = Object.keys(appData.isciArsivi).sort().reverse();
+            tarihler.forEach(t => {
+                let detay = "";
+                appData.personelListesi.forEach(p => {
+                    const c = appData.isciArsivi[t][p.id] || 0;
+                    if(c > 0) detay += `<div class="archive-item"><span class="archive-worker-name">${p.ad}<span class="archive-job-tag">${p.job}</span></span><span class="archive-count">${c} Adet</span></div>`;
+                });
+                
+                let mDetay = "";
+                if(appData.mesaiData[t] && appData.mesaiData[t].length > 0) {
+                    mDetay = `<div class="archive-mesai-box"><span class="archive-mesai-title">🌙 AKŞAM MESAİSİ</span>`;
+                    appData.mesaiData[t].forEach(m => {
+                        const p = appData.personelListesi.find(x => x.id == m.id);
+                        if(p) mDetay += `<div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>${p.ad} Ekibi (${m.kisi} Kişi)</span><b>${m.saat}sa ${m.dk}dk</b></div>`;
+                    });
+                    mDetay += `</div>`;
+                }
+                if(detay || mDetay) {
+                    html += `<div class="card"><div class="archive-date-header">📅 ${formatTurkishDate(t)}</div>${detay}${mDetay}</div>`;
+                }
+            });
+            document.getElementById('archive-list').innerHTML = html || `<div style="text-align:center; color:gray; margin-top:50px;">Henüz kayıtlı veri bulunmuyor.</div>`;
+        }
+
+        function updateFooter() {
+            const activePage = document.querySelector('.page.active').id;
+            const bugun = getTodayStr();
+            let html = "";
+            if (activePage === 'order-page') {
+                let y = 0, i = 0;
+                for(let m in appData.gunlukSiparis) {
+                    if(menuGruplari["🥘 Yemekler"].includes(m)) y += appData.gunlukSiparis[m];
+                    if(menuGruplari["🥤 İçecekler"].includes(m)) i += appData.gunlukSiparis[m];
+                }
+                html = `<div class="footer-item">🥘 Yemek: ${y}</div><div class="footer-item">🥤 İçecek: ${i}</div>`;
+            } else {
+                let counts = {}; isKategorileri.forEach(k => counts[k] = 0);
+                let t_kisi = 0, t_saat = 0, t_dk = 0;
+                for(let id in appData.isciArsivi[bugun]) {
+                    const p = appData.personelListesi.find(x => x.id == id);
+                    if(p) counts[p.job] += appData.isciArsivi[bugun][id];
+                }
+                (appData.mesaiData[bugun] || []).forEach(m => {
+                    t_kisi += parseInt(m.kisi || 0); t_saat += parseInt(m.saat || 0); t_dk += parseInt(m.dk || 0);
+                });
+                t_saat += Math.floor(t_dk / 60); t_dk = t_dk % 60;
+                html = isKategorileri.map(k => counts[k] > 0 ? `<div class="footer-item">${k[0]}: ${counts[k]}</div>` : '').join('');
+                if(t_kisi > 0) html += `<div class="footer-item" style="color:var(--apple-green)">🌙 ${t_kisi} Kişi / ${t_saat}s ${t_dk}d</div>`;
+            }
+            document.getElementById('footer-text').innerHTML = html || "Giriş Bekleniyor...";
+        }
+
+        function removeWorker(id) { if(confirm("İşçiyi tamamen sil?")) { appData.personelListesi = appData.personelListesi.filter(p => p.id !== id); refreshUI(); } }
+        function clearFullArchive() { if(confirm("TÜM SİSTEMİ SIFIRLA? Bu işlem geri alınamaz!")) { localStorage.clear(); location.reload(); } }
+        init();
+    </script>
+</body>
+</html>
